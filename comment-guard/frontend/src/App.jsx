@@ -1,0 +1,41 @@
+import { useState } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Register from "./pages/Register";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import Connections from "./pages/Connections";
+import Profile from "./pages/Profile";
+import UserProfile from "./pages/UserProfile";
+import Admin from "./pages/Admin";
+import AdminUserDetail from "./pages/AdminUserDetail";
+import NavBar from "./components/NavBar";
+import Splash from "./components/Splash";
+import { useAuth } from "./context/AuthContext";
+
+function App() {
+  const { user } = useAuth();
+  const [showSplash, setShowSplash] = useState(true);
+
+  if (showSplash) {
+    return <Splash onDone={() => setShowSplash(false)} />;
+  }
+
+  return (
+    <>
+      <NavBar />
+      <Routes>
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
+        <Route path="/connections" element={user ? <Connections /> : <Navigate to="/login" />} />
+        <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
+        <Route path="/profile/:id" element={user ? <UserProfile /> : <Navigate to="/login" />} />
+        <Route path="/admin" element={user?.role === "admin" ? <Admin /> : <Navigate to="/dashboard" />} />
+        <Route path="/admin/users/:id" element={user?.role === "admin" ? <AdminUserDetail /> : <Navigate to="/dashboard" />} />
+        <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
+      </Routes>
+    </>
+  );
+}
+
+export default App;
