@@ -1,22 +1,70 @@
+
 import express from "express";
 import Post from "../models/Post.js";
 import ConnectionRequest from "../models/ConnectionRequest.js";
 import protect from "../middleware/auth.js";
 import upload from "../middleware/upload.js";
+import cloudinary from "../config/cloudinary.js";
+import fs from "fs/promises";
 
 const router = express.Router();
 
-router.post("/upload", protect, upload.single("media"), (req, res) => {
-  if (!req.file) return res.status(400).json({ message: "No file uploaded" });
-  const mediaType = req.file.mimetype.startsWith("video") ? "video" : "image";
-  const mediaUrl = `/uploads/${req.file.filename}`;
-  res.status(201).json({ mediaUrl, mediaType });
-});
+// Upload post images and videos to Cloudinary
+router.post(
+  "/upload",
+  protect,
+  upload.single("media"),
+  async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
 
+    try {
+      const mediaType = req.file.mimetype.startsWith("video")
+        ? "video"
+        : "image";
+
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "comment-guard/posts",
+        resource_type: "auto",
+      });
+
+      return res.status(201).json({
+        mediaUrl: result.secure_url,
+        mediaType,
+      });
+    } catch (err) {
+      console.error("Cloudinary upload failed:", err.message);
+
+      return res.status(500).json({
+        message: "Media upload failed. Please try again.",
+      });
+    } finally {
+      // Remove the temporary file after the upload attempt
+      if (req.file?.path) {
+        try {
+          await fs.unlink(req.file.path);
+        } catch (cleanupError) {
+          console.error(
+            "Temporary file cleanup failed:",
+            cleanupError.message
+          );
+        }
+      }
+    }
+  }
+);
+
+// Create a post
 router.post("/", protect, async (req, res) => {
   try {
     const { content, mediaUrl, mediaType } = req.body;
-    if (!content) return res.status(400).json({ message: "Post content is required" });
+
+    if (!content) {
+      return res.status(400).json({
+        message: "Post content is required",
+      });
+    }
 
     const post = await Post.create({
       author: req.userId,
@@ -24,34 +72,53 @@ router.post("/", protect, async (req, res) => {
       mediaUrl: mediaUrl || "",
       mediaType: mediaType || "none",
     });
-    res.status(201).json(post);
+
+    return res.status(201).json(post);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Create post failed:", err.message);
+
+    return res.status(500).json({
+      message: err.message,
+    });
   }
 });
 
+// Get posts from the current user and accepted connections
 router.get("/", protect, async (req, res) => {
   try {
     const connections = await ConnectionRequest.find({
       status: "accepted",
-      $or: [{ sender: req.userId }, { receiver: req.userId }],
+      $or: [
+        { sender: req.userId },
+        { receiver: req.userId },
+      ],
     });
 
-    const connectedIds = connections.map((c) =>
-      c.sender.toString() === req.userId ? c.receiver : c.sender
+    const connectedIds = connections.map((connection) =>
+      connection.sender.toString() === req.userId
+        ? connection.receiver
+        : connection.sender
     );
+
     const visibleAuthorIds = [...connectedIds, req.userId];
 
-    const posts = await Post.find({ author: { $in: visibleAuthorIds } })
+    const posts = await Post.find({
+      author: { $in: visibleAuthorIds },
+    })
       .populate("author", "name email")
       .sort({ createdAt: -1 });
 
-    res.json(posts);
+    return res.json(posts);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Fetch posts failed:", err.message);
+
+    return res.status(500).json({
+      message: err.message,
+    });
   }
 });
 
+// Get posts belonging to a specific user
 router.get("/user/:userId", protect, async (req, res) => {
   try {
     const targetId = req.params.userId;
@@ -64,70 +131,129 @@ router.get("/user/:userId", protect, async (req, res) => {
           { sender: targetId, receiver: req.userId },
         ],
       });
+
       if (!isConnected) {
-        return res.status(403).json({ message: "You must be connected to view this user's posts" });
+        return res.status(403).json({
+          message: "You must be connected to view this user's posts",
+        });
       }
     }
 
-    const posts = await Post.find({ author: targetId }).populate("author", "name email").sort({ createdAt: -1 });
-    res.json(posts);
+    const posts = await Post.find({
+      author: targetId,
+    })
+      .populate("author", "name email")
+      .sort({ createdAt: -1 });
+
+    return res.json(posts);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Fetch user posts failed:", err.message);
+
+    return res.status(500).json({
+      message: err.message,
+    });
   }
 });
 
+// Like or unlike a post
 router.put("/:id/like", protect, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
-    if (!post) return res.status(404).json({ message: "Post not found" });
 
-    const alreadyLiked = post.likes.some((id) => id.toString() === req.userId);
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+      });
+    }
+
+    const alreadyLiked = post.likes.some(
+      (id) => id.toString() === req.userId
+    );
+
     if (alreadyLiked) {
-      post.likes = post.likes.filter((id) => id.toString() !== req.userId);
+      post.likes = post.likes.filter(
+        (id) => id.toString() !== req.userId
+      );
     } else {
       post.likes.push(req.userId);
     }
+
     await post.save();
 
-    res.json({ likes: post.likes, liked: !alreadyLiked });
+    return res.json({
+      likes: post.likes,
+      liked: !alreadyLiked,
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Like post failed:", err.message);
+
+    return res.status(500).json({
+      message: err.message,
+    });
   }
 });
 
+// Edit a post
 router.put("/:id", protect, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
-    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+      });
+    }
 
     if (post.author.toString() !== req.userId) {
-      return res.status(403).json({ message: "Not authorized to edit this post" });
+      return res.status(403).json({
+        message: "Not authorized to edit this post",
+      });
     }
 
     post.content = req.body.content ?? post.content;
     post.mediaUrl = req.body.mediaUrl ?? post.mediaUrl;
     post.mediaType = req.body.mediaType ?? post.mediaType;
+
     await post.save();
 
-    res.json(post);
+    return res.json(post);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Edit post failed:", err.message);
+
+    return res.status(500).json({
+      message: err.message,
+    });
   }
 });
 
+// Delete a post
 router.delete("/:id", protect, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
-    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    if (!post) {
+      return res.status(404).json({
+        message: "Post not found",
+      });
+    }
 
     if (post.author.toString() !== req.userId) {
-      return res.status(403).json({ message: "Not authorized to delete this post" });
+      return res.status(403).json({
+        message: "Not authorized to delete this post",
+      });
     }
 
     await post.deleteOne();
-    res.json({ message: "Post deleted" });
+
+    return res.json({
+      message: "Post deleted",
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Delete post failed:", err.message);
+
+    return res.status(500).json({
+      message: err.message,
+    });
   }
 });
 
