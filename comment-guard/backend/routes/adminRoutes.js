@@ -101,7 +101,7 @@ router.get("/top-offenders", async (req, res) => {
     {
       $project: {
         totalAttempts: 1, highSeverity: 1, mediumSeverity: 1, lowSeverity: 1, lastAttempt: 1,
-        "user.name": 1, "user.email": 1,
+        "user.name": 1, "user.email": 1, "user.avatar": 1,
       },
     },
   ]);

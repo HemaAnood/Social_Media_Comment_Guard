@@ -136,7 +136,7 @@ export default function PostCard({ post, onPostChanged }) {
 
       {post.mediaUrl && post.mediaType === "image" && (
         <img
-          src={`http://localhost:5000${post.mediaUrl}`}
+          src={`http://social-media-comment-guard.onrender.com${post.mediaUrl}`}
           alt="post media"
           style={{ width: "100%", borderRadius: 10, marginTop: 10, maxHeight: 320, objectFit: "cover" }}
         />
@@ -144,7 +144,7 @@ export default function PostCard({ post, onPostChanged }) {
 
       {post.mediaUrl && post.mediaType === "video" && (
         <video
-          src={`http://localhost:5000${post.mediaUrl}`}
+          src={`http://social-media-comment-guard.onrender.com${post.mediaUrl}`}
           controls
           style={{ width: "100%", borderRadius: 10, marginTop: 10, maxHeight: 320 }}
         />

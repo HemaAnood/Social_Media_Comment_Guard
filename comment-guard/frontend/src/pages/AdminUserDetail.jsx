@@ -103,10 +103,10 @@ export default function AdminUserDetail() {
             </div>
 
             {p.mediaUrl && p.mediaType === "image" && (
-              <img src={`http://localhost:5000${p.mediaUrl}`} alt="" style={{ width: "100%", borderRadius: 8, marginTop: 10, maxHeight: 300, objectFit: "cover" }} />
+              <img src={`http://social-media-comment-guard.onrender.com${p.mediaUrl}`} alt="" style={{ width: "100%", borderRadius: 8, marginTop: 10, maxHeight: 300, objectFit: "cover" }} />
             )}
             {p.mediaUrl && p.mediaType === "video" && (
-              <video src={`http://localhost:5000${p.mediaUrl}`} controls style={{ width: "100%", borderRadius: 8, marginTop: 10, maxHeight: 300 }} />
+              <video src={`http://social-media-comment-guard.onrender.com${p.mediaUrl}`} controls style={{ width: "100%", borderRadius: 8, marginTop: 10, maxHeight: 300 }} />
             )}
 
             <p style={{ margin: "10px 0", fontSize: 14 }}>{p.content}</p>

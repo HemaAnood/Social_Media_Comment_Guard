@@ -69,14 +69,14 @@ export default function UserProfile() {
         <div key={p._id} className="ks-card" style={{ padding: 16, marginBottom: 10 }}>
           {p.mediaUrl && p.mediaType === "image" && (
             <img
-              src={`http://localhost:5000${p.mediaUrl}`}
+              src={`http://social-media-comment-guard.onrender.com${p.mediaUrl}`}
               alt=""
               style={{ width: "100%", borderRadius: 10, marginBottom: 10, maxHeight: 280, objectFit: "cover" }}
             />
           )}
           {p.mediaUrl && p.mediaType === "video" && (
             <video
-              src={`http://localhost:5000${p.mediaUrl}`}
+              src={`http://social-media-comment-guard.onrender.com${p.mediaUrl}`}
               controls
               style={{ width: "100%", borderRadius: 10, marginBottom: 10, maxHeight: 280 }}
             />
