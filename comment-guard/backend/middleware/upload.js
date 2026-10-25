@@ -15,8 +15,8 @@ const storage = multer.diskStorage({
   },
 });
 
-const fileFilter = (req, file, cb) => {
-  // Images for now — video types are already listed so we can turn video on later without changing this file
+// Posts: photos and short videos, up to 25 MB
+const mediaFilter = (req, file, cb) => {
   const allowed = ["image/jpeg", "image/png", "image/webp", "video/mp4", "video/webm", "video/quicktime"];
   if (allowed.includes(file.mimetype)) {
     cb(null, true);
@@ -27,8 +27,24 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({
   storage,
-  fileFilter,
-  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB max
+  fileFilter: mediaFilter,
+  limits: { fileSize: 25 * 1024 * 1024 },
+});
+
+// Profile pictures: images only, up to 5 MB
+const imageFilter = (req, file, cb) => {
+  const allowed = ["image/jpeg", "image/png", "image/webp"];
+  if (allowed.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only JPG, PNG or WEBP images are allowed"), false);
+  }
+};
+
+export const uploadAvatar = multer({
+  storage,
+  fileFilter: imageFilter,
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 export default upload;

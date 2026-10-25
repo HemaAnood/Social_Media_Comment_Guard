@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/axios";
 import Loading from "../components/Loading";
+import Avatar from "../components/Avatar";
 
 const formatDateTime = (d) => {
   if (!d) return "";
@@ -105,9 +106,7 @@ export default function Admin() {
               >
                 {i + 1}
               </div>
-              <div className="ks-avatar" style={{ width: 36, height: 36, fontSize: 14 }}>
-                {o.user.name?.[0]?.toUpperCase()}
-              </div>
+              <Avatar user={o.user} size={36} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 14 }}>{o.user.name}</div>
                 <div style={{ fontSize: 12, color: "var(--ks-text-muted)" }}>{o.user.email}</div>
@@ -166,7 +165,7 @@ export default function Admin() {
               to={`/admin/users/${u._id}`}
               style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 8px", borderBottom: "1px solid var(--ks-border)", textDecoration: "none", color: "inherit" }}
             >
-              <div className="ks-avatar" style={{ width: 32, height: 32, fontSize: 13 }}>{u.name?.[0]?.toUpperCase()}</div>
+              <Avatar user={u} size={32} />
               <div>
                 <div style={{ fontWeight: 600, fontSize: 14, color: "var(--ks-primary)" }}>
                   {u.name} <em style={{ color: "var(--ks-text-muted)", fontWeight: 400 }}>({u.role})</em>

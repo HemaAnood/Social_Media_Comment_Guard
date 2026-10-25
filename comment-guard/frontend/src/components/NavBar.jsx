@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Logo from "./Logo";
+import Avatar from "./Avatar";
 
 export default function NavBar() {
   const { user, logout } = useAuth();
@@ -42,9 +43,9 @@ export default function NavBar() {
       </div>
 
       <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
-        <div className="ks-avatar" style={{ width: 32, height: 32, fontSize: 13 }}>
-          {user.name?.[0]?.toUpperCase()}
-        </div>
+        <Link to="/profile" title="Edit your profile picture">
+          <Avatar user={user} size={32} />
+        </Link>
         <button className="ks-btn ks-btn-outline" onClick={logout} style={{ padding: "6px 14px", fontSize: 13 }}>
           Logout
         </button>

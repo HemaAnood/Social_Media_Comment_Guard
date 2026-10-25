@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import api from "../api/axios";
 import Loading from "../components/Loading";
+import Avatar from "../components/Avatar";
 
 const formatDateTime = (d) => {
   if (!d) return "";
@@ -69,7 +70,7 @@ export default function AdminUserDetail() {
       </Link>
 
       <div className="ks-card" style={{ padding: 24, margin: "16px 0 24px", display: "flex", alignItems: "center", gap: 16 }}>
-        <div className="ks-avatar" style={{ width: 56, height: 56, fontSize: 22 }}>{profile.name?.[0]?.toUpperCase()}</div>
+        <Avatar user={profile} size={64} />
         <div>
           <h2 className="ks-heading" style={{ margin: 0 }}>
             {profile.name}
